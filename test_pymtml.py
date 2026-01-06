@@ -121,10 +121,10 @@ class MtmlTestSuite:
 
         try:
             gpu = mtmlDeviceInitGpu(device)
-            test_error("GPU Utilization (%)", lambda: mtmlGpuGetUtilization(device))
-            test_error("GPU Temperature (C)", lambda: mtmlGpuGetTemperature(device))
-            test_error("GPU Clock (MHz)", lambda: mtmlGpuGetClock(device))
-            test_error("GPU Max Clock (MHz)", lambda: mtmlGpuGetMaxClock(device))
+            test_error("GPU Utilization (%)", lambda: mtmlGpuGetUtilization(gpu))
+            test_error("GPU Temperature (C)", lambda: mtmlGpuGetTemperature(gpu))
+            test_error("GPU Clock (MHz)", lambda: mtmlGpuGetClock(gpu))
+            test_error("GPU Max Clock (MHz)", lambda: mtmlGpuGetMaxClock(gpu))
 
             # Test engine utilization
             for engine in range(MTML_GPU_ENGINE_MAX):
@@ -147,10 +147,10 @@ class MtmlTestSuite:
             test_error("Used Memory (bytes)", lambda: mtmlMemoryGetUsed(memory))
             test_error("System Used Memory", lambda: mtmlMemoryGetUsedSystem(memory))
             test_error(
-                "Memory Utilization (%)", lambda: mtmlMemoryGetUtilization(device)
+                "Memory Utilization (%)", lambda: mtmlMemoryGetUtilization(memory)
             )
-            test_error("Memory Clock (MHz)", lambda: mtmlMemoryGetClock(device))
-            test_error("Memory Max Clock (MHz)", lambda: mtmlMemoryGetMaxClock(device))
+            test_error("Memory Clock (MHz)", lambda: mtmlMemoryGetClock(memory))
+            test_error("Memory Max Clock (MHz)", lambda: mtmlMemoryGetMaxClock(memory))
             test_error("Memory Bus Width (bits)", lambda: mtmlMemoryGetBusWidth(memory))
             test_error(
                 "Memory Bandwidth (GB/s)", lambda: mtmlMemoryGetBandwidth(memory)
@@ -167,8 +167,8 @@ class MtmlTestSuite:
 
         try:
             vpu = mtmlDeviceInitVpu(device)
-            test_error("VPU Clock (MHz)", lambda: mtmlVpuGetClock(device))
-            test_error("VPU Max Clock (MHz)", lambda: mtmlVpuGetMaxClock(device))
+            test_error("VPU Clock (MHz)", lambda: mtmlVpuGetClock(vpu))
+            test_error("VPU Max Clock (MHz)", lambda: mtmlVpuGetMaxClock(vpu))
             test_error("VPU Utilization", lambda: mtmlVpuGetUtilization(vpu))
             test_error("Codec Capacity", lambda: mtmlVpuGetCodecCapacity(vpu))
             mtmlDeviceFreeVpu(vpu)
