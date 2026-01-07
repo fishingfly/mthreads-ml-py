@@ -10,6 +10,7 @@ from ctypes import *
 from dataclasses import dataclass
 from functools import wraps
 from typing import TYPE_CHECKING as _TYPE_CHECKING
+from contextlib import contextmanager
 
 if _TYPE_CHECKING:
     from typing_extensions import TypeAlias as _TypeAlias  # Python 3.10+
@@ -818,7 +819,7 @@ def mtmlDeviceGetPciInfo(device):
         c_pciinfo.busId = c_pciinfo.sbdf
     return c_pciinfo
 
-
+@convertStrBytes
 def mtmlDeviceGetSerialNumber(device):
     global libHandle
     c_serial = create_string_buffer(MTML_DEVICE_SERIAL_NUMBER_BUFFER_SIZE)
@@ -888,96 +889,87 @@ def mtmlMemoryGetUsed(memory):
     return c_used.value
 
 
-def mtmlMemoryGetClock(device):
+def mtmlMemoryGetClock(memory):
     global libHandle
     c_clock = c_uint()
-    c_memory = mtmlDeviceInitMemory(device)
     fn = _mtmlGetFunctionPointer("mtmlMemoryGetClock")
-    ret = fn(c_memory, byref(c_clock))
+    ret = fn(memory, byref(c_clock))
     _mtmlCheckReturn(ret)
     return c_clock.value
 
 
-def mtmlMemoryGetMaxClock(device):
+def mtmlMemoryGetMaxClock(memory):
     global libHandle
     c_clock = c_uint()
-    c_memory = mtmlDeviceInitMemory(device)
     fn = _mtmlGetFunctionPointer("mtmlMemoryGetMaxClock")
-    ret = fn(c_memory, byref(c_clock))
+    ret = fn(memory, byref(c_clock))
     _mtmlCheckReturn(ret)
     return c_clock.value
 
 
-def mtmlMemoryGetUtilization(device):
+def mtmlMemoryGetUtilization(memory):
     global libHandle
     utilization = c_uint()
-    c_memory = mtmlDeviceInitMemory(device)
     fn = _mtmlGetFunctionPointer("mtmlMemoryGetUtilization")
-    ret = fn(c_memory, byref(utilization))
+    ret = fn(memory, byref(utilization))
     _mtmlCheckReturn(ret)
     return utilization.value
 
 
-def mtmlGpuGetUtilization(device):
+def mtmlGpuGetUtilization(gpu):
     global libHandle
     utilization = c_uint()
-    c_gpu = mtmlDeviceInitGpu(device)
     fn = _mtmlGetFunctionPointer("mtmlGpuGetUtilization")
-    ret = fn(c_gpu, byref(utilization))
+    ret = fn(gpu, byref(utilization))
     _mtmlCheckReturn(ret)
     return utilization.value
 
 
-def mtmlGpuGetClock(device):
+def mtmlGpuGetClock(gpu):
     global libHandle
     c_clock = c_uint()
-    gpu = mtmlDeviceInitGpu(device)
     fn = _mtmlGetFunctionPointer("mtmlGpuGetClock")
     ret = fn(gpu, byref(c_clock))
     _mtmlCheckReturn(ret)
     return c_clock.value
 
 
-def mtmlGpuGetMaxClock(device):
+def mtmlGpuGetMaxClock(gpu):
     global libHandle
     c_clock = c_uint()
-    c_gpu = mtmlDeviceInitGpu(device)
     fn = _mtmlGetFunctionPointer("mtmlGpuGetMaxClock")
-    ret = fn(c_gpu, byref(c_clock))
+    ret = fn(gpu, byref(c_clock))
     _mtmlCheckReturn(ret)
     return c_clock.value
 
 
-def mtmlGpuGetTemperature(device):
+def mtmlGpuGetTemperature(gpu):
     global libHandle
     c_temp = c_uint()
-    c_gpu = mtmlDeviceInitGpu(device)
     fn = _mtmlGetFunctionPointer("mtmlGpuGetTemperature")
-    ret = fn(c_gpu, byref(c_temp))
+    ret = fn(gpu, byref(c_temp))
     _mtmlCheckReturn(ret)
     return c_temp.value
 
 
-def mtmlVpuGetClock(device):
+def mtmlVpuGetClock(vpu):
     global libHandle
     c_clock = c_uint()
-    c_vpu = mtmlDeviceInitVpu(device)
     fn = _mtmlGetFunctionPointer("mtmlVpuGetClock")
-    ret = fn(c_vpu, byref(c_clock))
+    ret = fn(vpu, byref(c_clock))
     _mtmlCheckReturn(ret)
     return c_clock.value
 
 
-def mtmlVpuGetMaxClock(device):
+def mtmlVpuGetMaxClock(vpu):
     global libHandle
     c_clock = c_uint()
-    c_vpu = mtmlDeviceInitVpu(device)
     fn = _mtmlGetFunctionPointer("mtmlVpuGetMaxClock")
-    ret = fn(c_vpu, byref(c_clock))
+    ret = fn(vpu, byref(c_clock))
     _mtmlCheckReturn(ret)
     return c_clock.value
 
-
+@convertStrBytes
 def mtmlSystemGetDriverVersion(system):
     c_version = create_string_buffer(MTML_SYSTEM_DRIVER_VERSION_BUFFER_SIZE)
     fn = _mtmlGetFunctionPointer("mtmlSystemGetDriverVersion")
@@ -1294,6 +1286,16 @@ def mtmlGpuGetEngineUtilization(gpu, engine):
     _mtmlCheckReturn(ret)
     return c_util.value
 
+@contextmanager
+def mtmlGpuContext(device):
+    c_gpu = None
+    try:
+        c_gpu = mtmlDeviceInitGpu(device)
+        yield c_gpu
+    finally:
+        if c_gpu is not None:
+            mtmlDeviceFreeGpu(c_gpu)
+
 
 ## Memory APIs
 def mtmlMemoryGetUsedSystem(memory):
@@ -1344,6 +1346,15 @@ def mtmlMemoryGetType(memory):
     _mtmlCheckReturn(ret)
     return c_type.value
 
+@contextmanager
+def mtmlMemoryContext(device):
+    c_memory = None
+    try:
+        c_memory = mtmlDeviceInitMemory(device)
+        yield c_memory
+    finally:
+        if c_memory is not None:
+            mtmlDeviceFreeMemory(c_memory)
 
 ## VPU APIs
 def mtmlVpuGetUtilization(vpu):
@@ -1394,6 +1405,15 @@ def mtmlVpuGetDecoderSessionMetrics(vpu, sessionId):
     _mtmlCheckReturn(ret)
     return c_metrics
 
+@contextmanager
+def mtmlVpuContext(device):
+    c_vpu = None
+    try:
+        c_vpu = mtmlDeviceInitVpu(device)
+        yield c_vpu
+    finally:
+        if c_vpu is not None:
+            mtmlDeviceFreeVpu(c_vpu)
 
 ## Log configuration APIs
 def mtmlLogSetConfiguration(configuration):
@@ -1888,42 +1908,51 @@ def nvmlDeviceGetSerial(device):
 
 
 def nvmlDeviceGetMemoryInfo(device):
-    handle = mtmlDeviceInitMemory(device)
-    total = mtmlMemoryGetTotal(handle)
-    used = mtmlMemoryGetUsed(handle)
-    return NVMLMemoryInfo(total=total, free=(total - used), used=used)
+    with mtmlMemoryContext(device) as c_memory:
+        total = mtmlMemoryGetTotal(c_memory)
+        used = mtmlMemoryGetUsed(c_memory)
+        return NVMLMemoryInfo(total=total, free=(total - used), used=used)
 
 
 def nvmlDeviceGetUtilizationRates(device):
-    gpu = mtmlGpuGetUtilization(device)
-    memory = mtmlMemoryGetUtilization(device)
+    with mtmlGpuContext(device) as c_gpu:
+        gpu = mtmlGpuGetUtilization(c_gpu)
+    with mtmlMemoryContext(device) as c_memory:
+        memory = mtmlMemoryGetUtilization(c_memory)
     return NVMLUtilization(gpu=gpu, memory=memory)
 
 
 def nvmlDeviceGetClockInfo(device, type):
     if type == NVML_CLOCK_GRAPHICS or type == NVML_CLOCK_SM:
-        return mtmlGpuGetClock(device)
+        with mtmlGpuContext(device) as c_gpu:
+            return mtmlGpuGetClock(c_gpu)
     elif type == NVML_CLOCK_VIDEO:
-        return mtmlVpuGetClock(device)
+        with mtmlVpuContext(device) as c_vpu:
+            return mtmlVpuGetClock(c_vpu)
     elif type == NVML_CLOCK_MEM:
-        return mtmlMemoryGetClock(device)
+        with mtmlMemoryContext(device) as c_memory:
+            return mtmlMemoryGetClock(c_memory)
     else:
         return 0
 
 
 def nvmlDeviceGetMaxClockInfo(device, type):
     if type == NVML_CLOCK_GRAPHICS or type == NVML_CLOCK_SM:
-        return mtmlGpuGetMaxClock(device)
+        with mtmlGpuContext(device) as c_gpu:
+            return mtmlGpuGetMaxClock(c_gpu)
     elif type == NVML_CLOCK_VIDEO:
-        return mtmlVpuGetMaxClock(device)
+        with mtmlVpuContext(device) as c_vpu:
+            return mtmlVpuGetMaxClock(c_vpu)
     elif type == NVML_CLOCK_MEM:
-        return mtmlMemoryGetMaxClock(device)
+        with mtmlMemoryContext(device) as c_memory:
+            return mtmlMemoryGetMaxClock(c_memory)
     else:
         return 0
 
 
 def nvmlDeviceGetTemperature(device, type):
-    return mtmlGpuGetTemperature(device)
+    with mtmlGpuContext(device) as c_gpu:
+        return mtmlGpuGetTemperature(c_gpu)
 
 
 def nvmlDeviceGetPowerUsage(device):
@@ -1957,18 +1986,18 @@ def nvmlDeviceGetBAR1MemoryInfo(device):
 
 def nvmlDeviceGetEncoderUtilization(device):
     try:
-        vpu = mtmlDeviceInitVpu(device)
-        util = mtmlVpuGetUtilization(vpu)
-        return [util.encodeUtil, 0]  # samplingPeriodUs not available
+        with mtmlVpuContext(device) as vpu:
+            util = mtmlVpuGetUtilization(vpu)
+            return [util.encodeUtil, 0]  # samplingPeriodUs not available
     except MTMLError:
         return [0, 0]
 
 
 def nvmlDeviceGetDecoderUtilization(device):
     try:
-        vpu = mtmlDeviceInitVpu(device)
-        util = mtmlVpuGetUtilization(vpu)
-        return [util.decodeUtil, 0]  # samplingPeriodUs not available
+        with mtmlVpuContext(device) as vpu:
+            util = mtmlVpuGetUtilization(vpu)
+            return [util.decodeUtil, 0]  # samplingPeriodUs not available
     except MTMLError:
         return [0, 0]
 
@@ -2000,10 +2029,10 @@ def nvmlDeviceGetPerformanceState(device):
 
 def nvmlDeviceGetTotalEccErrors(device, errorType, counterType):
     try:
-        memory = mtmlDeviceInitMemory(device)
-        return mtmlMemoryGetEccErrorCounter(
-            memory, errorType, counterType, MTML_MEMORY_LOCATION_DRAM
-        )
+        with mtmlMemoryContext(device) as memory:
+            return mtmlMemoryGetEccErrorCounter(
+                memory, errorType, counterType, MTML_MEMORY_LOCATION_DRAM
+            )
     except MTMLError:
         return 0
 

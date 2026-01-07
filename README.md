@@ -47,16 +47,16 @@ for i in range(device_count):
     print(f"Device {i}: {name} ({uuid})")
 
     # Memory info
-    memory = mtmlDeviceInitMemory(device)
-    total = mtmlMemoryGetTotal(memory)
-    used = mtmlMemoryGetUsed(memory)
-    print(f"  Memory: {used / 1024**3:.2f} / {total / 1024**3:.2f} GB")
-    mtmlDeviceFreeMemory(memory)
+    with mtmlMemoryContext(device) as memory:
+        total = mtmlMemoryGetTotal(memory)
+        used = mtmlMemoryGetUsed(memory)
+        print(f"  Memory: {used / 1024**3:.2f} / {total / 1024**3:.2f} GB")
 
     # GPU utilization
-    util = mtmlGpuGetUtilization(device)
-    temp = mtmlGpuGetTemperature(device)
-    print(f"  GPU Util: {util}%, Temp: {temp}°C")
+    with mtmlGpuContext(device) as gpu:
+        util = mtmlGpuGetUtilization(gpu)
+        temp = mtmlGpuGetTemperature(gpu)
+        print(f"  GPU Util: {util}%, Temp: {temp}°C")
 
 # Shutdown
 mtmlLibraryShutDown()
@@ -85,18 +85,18 @@ mtmlLibraryShutDown()
 
 ### GPU APIs
 - `mtmlDeviceInitGpu(device)` - Initialize GPU handle
-- `mtmlGpuGetUtilization(device)` - Get GPU utilization (%)
-- `mtmlGpuGetTemperature(device)` - Get GPU temperature (°C)
-- `mtmlGpuGetClock(device)` - Get current GPU clock (MHz)
-- `mtmlGpuGetMaxClock(device)` - Get max GPU clock (MHz)
+- `mtmlGpuGetUtilization(gpu)` - Get GPU utilization (%)
+- `mtmlGpuGetTemperature(gpu)` - Get GPU temperature (°C)
+- `mtmlGpuGetClock(gpu)` - Get current GPU clock (MHz)
+- `mtmlGpuGetMaxClock(gpu)` - Get max GPU clock (MHz)
 - `mtmlGpuGetEngineUtilization(gpu, engine)` - Get engine utilization
 
 ### Memory APIs
 - `mtmlDeviceInitMemory(device)` - Initialize memory handle
 - `mtmlMemoryGetTotal(memory)` - Get total memory (bytes)
 - `mtmlMemoryGetUsed(memory)` - Get used memory (bytes)
-- `mtmlMemoryGetUtilization(device)` - Get memory utilization (%)
-- `mtmlMemoryGetClock(device)` - Get memory clock (MHz)
+- `mtmlMemoryGetUtilization(memory)` - Get memory utilization (%)
+- `mtmlMemoryGetClock(memory)` - Get memory clock (MHz)
 - `mtmlMemoryGetBusWidth(memory)` - Get memory bus width (bits)
 - `mtmlMemoryGetBandwidth(memory)` - Get memory bandwidth (GB/s)
 
@@ -120,7 +120,7 @@ mtmlLibraryShutDown()
 
 ### VPU APIs (Video Processing Unit)
 - `mtmlDeviceInitVpu(device)` - Initialize VPU handle
-- `mtmlVpuGetClock(device)` - Get VPU clock (MHz)
+- `mtmlVpuGetClock(vpu)` - Get VPU clock (MHz)
 - `mtmlVpuGetUtilization(vpu)` - Get VPU utilization
 - `mtmlVpuGetCodecCapacity(vpu)` - Get codec capacity
 
