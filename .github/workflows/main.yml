@@ -1,0 +1,23 @@
+name: Mthreads-ML-PY Local Runner
+
+on: [push, workflow_dispatch]
+
+jobs:
+  Unit-test-job:
+    runs-on: self-hosted
+    steps:
+      - name: Print moore devices info
+        run: mthreads-gmi
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Test mtml sglang compatibility
+        run: python test_sglang_compat.py
+      - name: Test mtml
+        run: |
+          export CI_MTML_SKIP_ECC=1
+          python test_pymtml.py
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-report
+          path: report.txt
