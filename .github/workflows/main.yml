@@ -1,4 +1,4 @@
-name: Mthreads-ML-PY Local Runner
+name: mthreads-ml-py local runner
 
 on: [push, workflow_dispatch]
 
@@ -6,7 +6,7 @@ jobs:
   Unit-test-job:
     runs-on: self-hosted
     steps:
-      - name: Print moore devices info
+      - name: Print device info
         run: mthreads-gmi
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,8 +16,6 @@ jobs:
         run: |
           export CI_MTML_SKIP_ECC=1
           python test_pymtml.py
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: my-report
-          path: report.txt
+      - name: Test pynvml
+        run: |
+          python test_pynvml.py
