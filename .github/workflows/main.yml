@@ -1,0 +1,21 @@
+name: mthreads-ml-py local runner
+
+on: [push, workflow_dispatch]
+
+jobs:
+  Unit-test-job:
+    runs-on: self-hosted
+    steps:
+      - name: Print device info
+        run: mthreads-gmi
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Test mtml sglang compatibility
+        run: python test_sglang_compat.py
+      - name: Test mtml
+        run: |
+          export CI_MTML_SKIP_ECC=1
+          python test_pymtml.py
+      - name: Test pynvml
+        run: |
+          python test_pynvml.py
